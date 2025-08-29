@@ -1,0 +1,14 @@
+.controls {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 200px;
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+}

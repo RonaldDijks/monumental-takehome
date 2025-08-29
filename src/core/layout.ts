@@ -7,6 +7,8 @@ import {
   HALF_BRICK_MODULE_SIZE,
 } from "./constants";
 
+export type BrickId = number;
+
 export type BrickType = "full" | "half";
 
 /**
@@ -18,7 +20,7 @@ export interface BrickLayout {
    *
    * Shouldn't be used to try and deduce the position of the brick, just serves as an opaque identifier for the brick.
    */
-  id: number;
+  id: BrickId;
   /**
    * The type of the brick.
    */

@@ -1,45 +1,45 @@
-import { useEffect, useRef } from "react";
 import "./App.css";
 import { generateStretcherLayout } from "./core/layout";
+import { WallVisualisation } from "./components/WallVisualisation";
+import { naivePlanning } from "./core/planning";
+import { useState } from "react";
+import { ControlRow, Controls } from "./components/Controls";
+import { useKeyPress } from "./hooks/useKeyPress";
 
 export const wallWidth = 2300;
 export const wallHeight = 2000;
 
 const layout = generateStretcherLayout(wallWidth, wallHeight);
+const plan = naivePlanning(layout);
 
 function App() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const brickColor = getComputedStyle(document.body).getPropertyValue(
-    "--color-stone-200"
-  );
+  const [currentAction, setCurrentAction] = useState(0);
+  const bricksLaid = plan.bricks.slice(0, currentAction);
 
-  useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+  const previousAction = () => {
+    setCurrentAction(Math.max(0, currentAction - 1));
+  };
 
-      // Set up our coordinate system to start from bottom left
-      ctx.translate(0, canvas.height);
-      ctx.scale(canvas.width / wallWidth, -(canvas.height / wallHeight));
+  const nextAction = () => {
+    setCurrentAction(Math.min(plan.bricks.length - 1, currentAction + 1));
+  };
 
-      ctx.strokeStyle = "red";
-      ctx.fillStyle = brickColor;
-
-      ctx.strokeRect(0, 0, wallWidth, wallHeight);
-
-      for (const course of layout.courses) {
-        for (const brick of course.bricks) {
-          ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
-        }
-      }
-
-      ctx.resetTransform();
-    }
-  }, [brickColor]);
+  useKeyPress(" ", nextAction);
+  useKeyPress("Enter", nextAction);
+  useKeyPress("ArrowLeft", previousAction);
+  useKeyPress("ArrowRight", nextAction);
 
   return (
-    <canvas width={wallWidth / 4} height={wallHeight / 4} ref={canvasRef} />
+    <>
+      <WallVisualisation layout={layout} bricksLaid={bricksLaid} />
+      <Controls>
+        <ControlRow>
+          <button onClick={previousAction}>{"<"}</button>
+          {currentAction} / {plan.bricks.length}
+          <button onClick={nextAction}>{">"}</button>
+        </ControlRow>
+      </Controls>
+    </>
   );
 }
 
