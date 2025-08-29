@@ -1,0 +1,32 @@
+:root {
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d7d3d1;
+  --color-stone-400: #a6a09b;
+  --color-stone-500: #78716b;
+  --color-stone-600: #58534d;
+  --color-stone-700: #45403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1b1917;
+  --color-stone-950: #0c0a09;
+
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: rgba(255, 255, 255, 0.87);
+  background-color: var(--color-stone-950);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-height: 100vh;
+}
