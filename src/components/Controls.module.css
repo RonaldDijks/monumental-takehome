@@ -1,14 +1,30 @@
 .controls {
-  display: flex;
   position: absolute;
   top: 0;
   right: 0;
   width: 200px;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .row {
   display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.row_label {
+  font-weight: bold;
+}
+
+.row_content {
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
+  width: 100%;
+}
+
+.control_dropdown {
   width: 100%;
 }

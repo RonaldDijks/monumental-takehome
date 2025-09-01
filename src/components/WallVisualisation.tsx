@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import type { BrickId, WallLayout } from "../core/layout";
+import type { WallLayout } from "../core/layout";
+import type { BrickPlacement } from "../core/planning";
 
 export interface WallVisualisationProps {
   layout: WallLayout;
-  bricksLaid: BrickId[];
+  bricksLaid: BrickPlacement[];
 }
 
 export const WallVisualisation: React.FC<WallVisualisationProps> = ({
@@ -30,24 +31,35 @@ export const WallVisualisation: React.FC<WallVisualisationProps> = ({
       ctx.strokeRect(0, 0, width, height);
 
       const computedStyle = getComputedStyle(document.body);
-      const activeColor = computedStyle.getPropertyValue("--color-stone-200");
       const ghostColor = computedStyle.getPropertyValue("--color-stone-800");
 
       for (const course of courses) {
         for (const brick of course.bricks) {
-          if (bricksLaid.includes(brick.id)) {
-            ctx.fillStyle = activeColor;
-            ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+          const placement = bricksLaid.find((b) => b.id === brick.id);
+          if (placement) {
+            const color = strideToHexColor(placement.stride ?? 0);
+            ctx.fillStyle = color;
+            ctx.fillRect(
+              brick.bounds.x,
+              brick.bounds.y,
+              brick.bounds.width,
+              brick.bounds.height
+            );
           } else {
             ctx.fillStyle = ghostColor;
-            ctx.fillRect(brick.x, brick.y, brick.width, brick.height);
+            ctx.fillRect(
+              brick.bounds.x,
+              brick.bounds.y,
+              brick.bounds.width,
+              brick.bounds.height
+            );
           }
         }
       }
 
       ctx.resetTransform();
     }
-  }, [bricksLaid, courses, height, width]);
+  }, [courses, height, width, bricksLaid]);
 
   return (
     <div
@@ -75,3 +87,31 @@ export const WallVisualisation: React.FC<WallVisualisationProps> = ({
     </div>
   );
 };
+
+/**
+ * Generate a hex colour from a stride index.
+ */
+function strideToHexColor(num: number) {
+  const hue = Math.abs(num * 137) % 360;
+  return hslToHex(hue, 70, 50);
+}
+
+/**
+ * Convert a color in HSL to hex.
+ */
+function hslToHex(h: number, s: number, l: number) {
+  s /= 100;
+  l /= 100;
+
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) =>
+    Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+
+  return (
+    "#" +
+    f(0).toString(16).padStart(2, "0") +
+    f(8).toString(16).padStart(2, "0") +
+    f(4).toString(16).padStart(2, "0")
+  );
+}

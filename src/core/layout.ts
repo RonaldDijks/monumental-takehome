@@ -1,15 +1,15 @@
-import {
-  BRICK_HEIGHT,
-  COURSE_HEIGHT,
-  FULL_BRICK_HEIGHT,
-  FULL_BRICK_MODULE_SIZE,
-  HALF_BRICK_HEIGHT,
-  HALF_BRICK_MODULE_SIZE,
-} from "./constants";
+import { createBounds, type Bounds } from "./geometry";
+
+export const BRICK_HEIGHT = 50;
+export const FULL_BRICK_WIDTH = 210;
+export const HALF_BRICK_WIDTH = 100;
+export const HEAD_JOINT_SIZE = 10;
+export const BED_JOINT_SIZE = 12.5;
+export const COURSE_HEIGHT = BRICK_HEIGHT + BED_JOINT_SIZE;
+export const FULL_BRICK_MODULE_SIZE = FULL_BRICK_WIDTH + HEAD_JOINT_SIZE;
+export const HALF_BRICK_MODULE_SIZE = HALF_BRICK_WIDTH + HEAD_JOINT_SIZE;
 
 export type BrickId = number;
-
-export type BrickType = "full" | "half";
 
 /**
  * A brick layout object containing the id, type, x, y, width, and height of a brick.
@@ -22,25 +22,25 @@ export interface BrickLayout {
    */
   id: BrickId;
   /**
-   * The type of the brick.
+   * The index of the course where this brick is located.
    */
-  type: BrickType;
+  courseIndex: number;
   /**
-   * The x position in space of the brick.
+   * The bounds of the brick.
    */
-  x: number;
-  /**
-   * The y position in space of the brick.
-   */
-  y: number;
-  /**
-   * The width of the brick.
-   */
-  width: number;
-  /**
-   * The height of the brick.
-   */
-  height: number;
+  bounds: Bounds;
+}
+
+export function createBrickLayout(
+  id: BrickId,
+  courseIndex: number,
+  bounds: Bounds
+): BrickLayout {
+  return {
+    id,
+    courseIndex,
+    bounds,
+  };
 }
 
 /**
@@ -71,6 +71,10 @@ export interface WallLayout {
    */
   height: number;
   /**
+   * The total number of bricks in the wall.
+   */
+  totalBricks: number;
+  /**
    * The courses in the wall. From bottom to top.
    */
   courses: CourseLayout[];
@@ -78,63 +82,57 @@ export interface WallLayout {
 
 /**
  * Generates a stretcher layout for a wall.
- * @param desiredWidth - The desired width of the wall. The actual width will be the nearest feasible width with the available brick and joint sizes.
- * @param desiredHeight - The desired height of the wall. The actual height will be the nearest feasible height with the available brick and joint sizes.
+ * @param width - Width of the wall.
+ * @param height - Height of the wall.
  * @returns A wall layout object containing the width, height, and courses.
  */
 export function generateStretcherLayout(
-  desiredWidth: number,
-  desiredHeight: number
+  width: number,
+  height: number
 ): WallLayout {
-  const numCourses = Math.floor(desiredHeight / COURSE_HEIGHT);
-  const height = numCourses * COURSE_HEIGHT;
+  const numCourses = Math.floor(height / COURSE_HEIGHT);
   const courses: CourseLayout[] = [];
-  let width = 0;
-  let brickId = 0;
+  let id: BrickId = 0;
 
   for (let courseIndex = 0; courseIndex < numCourses; courseIndex++) {
-    const y = courseIndex * COURSE_HEIGHT;
     const bricks: BrickLayout[] = [];
-
     let x = 0;
+    const y = courseIndex * COURSE_HEIGHT;
 
     const startWithHalfBrick = courseIndex % 2 === 0;
 
     if (startWithHalfBrick) {
-      bricks.push({
-        type: "half",
-        id: brickId++,
-        x,
-        y,
-        width: HALF_BRICK_HEIGHT,
-        height: BRICK_HEIGHT,
-      });
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, y, HALF_BRICK_WIDTH, BRICK_HEIGHT)
+        )
+      );
 
       x += HALF_BRICK_MODULE_SIZE;
     }
 
-    while (x + FULL_BRICK_HEIGHT <= desiredWidth) {
-      bricks.push({
-        type: "full",
-        id: brickId++,
-        x,
-        y,
-        width: FULL_BRICK_HEIGHT,
-        height: BRICK_HEIGHT,
-      });
+    while (x + FULL_BRICK_WIDTH <= width) {
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, y, FULL_BRICK_WIDTH, BRICK_HEIGHT)
+        )
+      );
 
       x += FULL_BRICK_MODULE_SIZE;
     }
 
-    if (x + HALF_BRICK_HEIGHT <= desiredWidth) {
-      bricks.push({
-        type: "half",
-        id: brickId++,
-        x,
-        y,
-        width: HALF_BRICK_HEIGHT,
-        height: BRICK_HEIGHT,
-      });
+    if (x + HALF_BRICK_WIDTH <= width) {
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, y, HALF_BRICK_WIDTH, BRICK_HEIGHT)
+        )
+      );
 
       x += HALF_BRICK_MODULE_SIZE;
     }
@@ -144,9 +142,12 @@ export function generateStretcherLayout(
       y,
       bricks,
     });
-
-    width = Math.max(width, x);
   }
 
-  return { width, height, courses };
+  return {
+    width,
+    height,
+    courses,
+    totalBricks: id,
+  };
 }
