@@ -1,5 +1,10 @@
 import "./App.css";
-import { generateStretcherLayout } from "./core/layout";
+import {
+  generateEnglishCrossBondLayout,
+  generateFlemishBondLayout,
+  generateStretcherLayout,
+  type WallLayout,
+} from "./core/layout";
 import { WallVisualisation } from "./components/WallVisualisation";
 import { naivePlanning, sweepPlanning, type StrategyFn } from "./core/planning";
 import { useMemo, useState } from "react";
@@ -9,7 +14,13 @@ import { useKeyPress } from "./hooks/useKeyPress";
 export const wallWidth = 2300;
 export const wallHeight = 2000;
 
-const layout = generateStretcherLayout(wallWidth, wallHeight);
+const layouts = {
+  stretcher: generateStretcherLayout,
+  englishCrossBond: generateEnglishCrossBondLayout,
+  flemishBond: generateFlemishBondLayout,
+} satisfies Record<string, (width: number, height: number) => WallLayout>;
+
+type Layout = keyof typeof layouts;
 
 const strategies = {
   naive: naivePlanning,
@@ -20,8 +31,18 @@ type Strategy = keyof typeof strategies;
 
 function App() {
   const [currentAction, setCurrentAction] = useState(0);
-  const [strategy, setStrategy] = useState<Strategy>("sweep");
-  const plan = useMemo(() => strategies[strategy](layout), [strategy]);
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>("sweep");
+  const [selectedLayout, setSelectedLayout] = useState<Layout>("stretcher");
+
+  const layout = useMemo(
+    () => layouts[selectedLayout](wallWidth, wallHeight),
+    [selectedLayout]
+  );
+
+  const plan = useMemo(
+    () => strategies[selectedStrategy](layout),
+    [selectedStrategy, layout]
+  );
 
   const bricksLaid = useMemo(
     () => plan.bricks.slice(0, currentAction),
@@ -55,13 +76,23 @@ function App() {
           {currentAction} / {plan.bricks.length}
           <button onClick={nextAction}>{">"}</button>
         </ControlRow>
+        <ControlRow label="Layout">
+          <ControlDropdown
+            options={Object.keys(layouts) as Layout[]}
+            value={selectedLayout}
+            onChange={(layout) => {
+              setCurrentAction(0);
+              setSelectedLayout(layout as Layout);
+            }}
+          />
+        </ControlRow>
         <ControlRow label="Strategy">
           <ControlDropdown
             options={Object.keys(strategies) as Strategy[]}
-            value={strategy}
+            value={selectedStrategy}
             onChange={(strategy) => {
               setCurrentAction(0);
-              setStrategy(strategy as Strategy);
+              setSelectedStrategy(strategy as Strategy);
             }}
           />
         </ControlRow>

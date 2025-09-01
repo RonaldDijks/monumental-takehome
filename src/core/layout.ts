@@ -97,49 +97,174 @@ export function generateStretcherLayout(
   for (let courseIndex = 0; courseIndex < numCourses; courseIndex++) {
     const bricks: BrickLayout[] = [];
     let x = 0;
-    const y = courseIndex * COURSE_HEIGHT;
+
+    function addBrick(width: number) {
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, courseIndex * COURSE_HEIGHT, width, BRICK_HEIGHT)
+        )
+      );
+      x += width + HEAD_JOINT_SIZE;
+    }
 
     const startWithHalfBrick = courseIndex % 2 === 0;
 
     if (startWithHalfBrick) {
-      bricks.push(
-        createBrickLayout(
-          id++,
-          courseIndex,
-          createBounds(x, y, HALF_BRICK_WIDTH, BRICK_HEIGHT)
-        )
-      );
-
-      x += HALF_BRICK_MODULE_SIZE;
+      addBrick(HALF_BRICK_WIDTH);
     }
 
     while (x + FULL_BRICK_WIDTH <= width) {
-      bricks.push(
-        createBrickLayout(
-          id++,
-          courseIndex,
-          createBounds(x, y, FULL_BRICK_WIDTH, BRICK_HEIGHT)
-        )
-      );
-
-      x += FULL_BRICK_MODULE_SIZE;
+      addBrick(FULL_BRICK_WIDTH);
     }
 
-    if (x + HALF_BRICK_WIDTH <= width) {
-      bricks.push(
-        createBrickLayout(
-          id++,
-          courseIndex,
-          createBounds(x, y, HALF_BRICK_WIDTH, BRICK_HEIGHT)
-        )
-      );
-
-      x += HALF_BRICK_MODULE_SIZE;
+    const remainingWidth = width - x;
+    if (remainingWidth > 0) {
+      addBrick(remainingWidth);
     }
 
     courses.push({
       index: courseIndex,
-      y,
+      y: courseIndex * COURSE_HEIGHT,
+      bricks,
+    });
+  }
+
+  return {
+    width,
+    height,
+    courses,
+    totalBricks: id,
+  };
+}
+
+/**
+ * Generates an English cross bond layout for a wall.
+ * @param width - Width of the wall.
+ * @param height - Height of the wall.
+ * @returns A wall layout object containing the width, height, and courses.
+ */
+export function generateEnglishCrossBondLayout(
+  width: number,
+  height: number
+): WallLayout {
+  const numCourses = Math.floor(height / COURSE_HEIGHT);
+  const courses: CourseLayout[] = [];
+  let id: BrickId = 0;
+
+  for (let courseIndex = 0; courseIndex < numCourses; courseIndex++) {
+    const bricks: BrickLayout[] = [];
+    let x = 0;
+
+    function addBrick(width: number) {
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, courseIndex * COURSE_HEIGHT, width, BRICK_HEIGHT)
+        )
+      );
+      x += width + HEAD_JOINT_SIZE;
+    }
+
+    const halfBrickCourse = courseIndex % 2 === 0;
+
+    if (halfBrickCourse) {
+      addBrick(HALF_BRICK_WIDTH / 2);
+
+      while (x + HALF_BRICK_WIDTH <= width) {
+        addBrick(HALF_BRICK_WIDTH);
+      }
+    } else {
+      while (x + FULL_BRICK_WIDTH <= width) {
+        addBrick(FULL_BRICK_WIDTH);
+      }
+    }
+
+    const remainingWidth = width - x;
+    if (remainingWidth > 0) {
+      addBrick(remainingWidth);
+    }
+
+    courses.push({
+      index: courseIndex,
+      y: courseIndex * COURSE_HEIGHT,
+      bricks,
+    });
+  }
+
+  return {
+    width,
+    height,
+    courses,
+    totalBricks: id,
+  };
+}
+
+export function generateFlemishBondLayout(
+  width: number,
+  height: number
+): WallLayout {
+  const numCourses = Math.floor(height / COURSE_HEIGHT);
+  const courses: CourseLayout[] = [];
+  let id: BrickId = 0;
+
+  for (let courseIndex = 0; courseIndex < numCourses; courseIndex++) {
+    const bricks: BrickLayout[] = [];
+    let x = 0;
+
+    function addBrick(width: number) {
+      bricks.push(
+        createBrickLayout(
+          id++,
+          courseIndex,
+          createBounds(x, courseIndex * COURSE_HEIGHT, width, BRICK_HEIGHT)
+        )
+      );
+      x += width + HEAD_JOINT_SIZE;
+    }
+
+    const startWithFullBrick = courseIndex % 2 === 0;
+
+    if (startWithFullBrick) {
+      let shouldPlaceFullBrick = true;
+      while (true) {
+        const brickWidth = shouldPlaceFullBrick
+          ? FULL_BRICK_WIDTH
+          : HALF_BRICK_WIDTH;
+        if (x + brickWidth > width) {
+          break;
+        }
+        addBrick(brickWidth);
+        shouldPlaceFullBrick = !shouldPlaceFullBrick;
+      }
+      const remainingWidth = width - x;
+      if (remainingWidth > 0) {
+        addBrick(remainingWidth);
+      }
+    } else {
+      let shouldPlaceFullBrick = false;
+      addBrick(HALF_BRICK_WIDTH / 2);
+      while (true) {
+        const brickWidth = shouldPlaceFullBrick
+          ? FULL_BRICK_WIDTH
+          : HALF_BRICK_WIDTH;
+        if (x + brickWidth > width) {
+          break;
+        }
+        addBrick(brickWidth);
+        shouldPlaceFullBrick = !shouldPlaceFullBrick;
+      }
+      const remainingWidth = width - x;
+      if (remainingWidth > 0) {
+        addBrick(remainingWidth);
+      }
+    }
+
+    courses.push({
+      index: courseIndex,
+      y: courseIndex * COURSE_HEIGHT,
       bricks,
     });
   }
