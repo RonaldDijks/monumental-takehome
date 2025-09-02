@@ -3,7 +3,7 @@ import {
   FULL_BRICK_MODULE_SIZE,
   type BrickId,
   type WallLayout,
-} from "./layout";
+} from "./layout/shared";
 
 export const BUILD_ENVELOPE_WIDTH = 800;
 export const BUILD_ENVELOPE_HEIGHT = 1300;
@@ -160,7 +160,7 @@ export const sweepPlanning: StrategyFn = (layout: WallLayout) => {
         placedBricks.map((brick) => brick.id)
       );
 
-      /** If there are no placeable bricks, move the. */
+      /** If there are no placeable bricks, move the envelope. */
       if (placeableBricks.length === 0) {
         break;
       }
@@ -176,6 +176,10 @@ export const sweepPlanning: StrategyFn = (layout: WallLayout) => {
         `Placed bricks: ${placedBricks.length} / ${layout.totalBricks}`
       );
     }
+
+    console.log(
+      `Placed bricks: ${placedBricks.length} / ${layout.totalBricks}`
+    );
 
     if (placedBricks.length === layout.totalBricks) {
       break;

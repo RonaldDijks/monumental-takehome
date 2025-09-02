@@ -1,15 +1,14 @@
 import "./App.css";
-import {
-  generateEnglishCrossBondLayout,
-  generateFlemishBondLayout,
-  generateStretcherLayout,
-  type WallLayout,
-} from "./core/layout";
+import { type WallLayout } from "./core/layout/shared";
 import { WallVisualisation } from "./components/WallVisualisation";
 import { naivePlanning, sweepPlanning, type StrategyFn } from "./core/planning";
 import { useMemo, useState } from "react";
 import { ControlDropdown, ControlRow, Controls } from "./components/Controls";
 import { useKeyPress } from "./hooks/useKeyPress";
+import { generateWildBondLayout } from "./core/layout/wildBond";
+import { generateStretcherLayout } from "./core/layout/stretcherBond";
+import { generateEnglishCrossBondLayout } from "./core/layout/englishCrossBond";
+import { generateFlemishBondLayout } from "./core/layout/flemishBond";
 
 export const wallWidth = 2300;
 export const wallHeight = 2000;
@@ -18,6 +17,7 @@ const layouts = {
   stretcher: generateStretcherLayout,
   englishCrossBond: generateEnglishCrossBondLayout,
   flemishBond: generateFlemishBondLayout,
+  wildBond: generateWildBondLayout,
 } satisfies Record<string, (width: number, height: number) => WallLayout>;
 
 type Layout = keyof typeof layouts;
@@ -31,7 +31,7 @@ type Strategy = keyof typeof strategies;
 
 function App() {
   const [currentAction, setCurrentAction] = useState(0);
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>("sweep");
+  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>("naive");
   const [selectedLayout, setSelectedLayout] = useState<Layout>("stretcher");
 
   const layout = useMemo(

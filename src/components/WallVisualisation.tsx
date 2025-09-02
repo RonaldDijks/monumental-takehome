@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { WallLayout } from "../core/layout";
+import type { WallLayout } from "../core/layout/shared";
 import type { BrickPlacement } from "../core/planning";
 
 export interface WallVisualisationProps {
