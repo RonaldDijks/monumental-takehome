@@ -1,5 +1,3 @@
-import { type Bounds } from "../geometry";
-
 export const BRICK_HEIGHT = 50;
 export const QUARTER_BRICK_WIDTH = 45;
 export const HALF_BRICK_WIDTH = 100;
@@ -23,25 +21,34 @@ export interface BrickLayout {
    * Shouldn't be used to try and deduce the position of the brick, just serves as an opaque identifier for the brick.
    */
   id: BrickId;
+
   /**
-   * The index of the course where this brick is located.
+   * The horizontal position of the brick.
+   */
+  x: number;
+
+  /**
+   * The width of the brick.
+   */
+  width: number;
+
+  /**
+   * The index of the course the brick is in.
    */
   courseIndex: number;
-  /**
-   * The bounds of the brick.
-   */
-  bounds: Bounds;
 }
 
 export function createBrickLayout(
   id: BrickId,
-  courseIndex: number,
-  bounds: Bounds
+  x: number,
+  width: number,
+  courseIndex: number
 ): BrickLayout {
   return {
     id,
+    x,
+    width,
     courseIndex,
-    bounds,
   };
 }
 
@@ -64,10 +71,6 @@ export interface WallLayout {
    * The height of the wall.
    */
   height: number;
-  /**
-   * The total number of bricks in the wall.
-   */
-  totalBricks: number;
   /**
    * The courses in the wall. From bottom to top.
    */

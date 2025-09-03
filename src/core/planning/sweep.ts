@@ -1,51 +1,20 @@
-import { contains, overlapsHorizontally, type Bounds } from "./geometry";
+import {
+  boundsFromBrickLayout,
+  findBricksInBounds,
+  overlapsHorizontally,
+  type Bounds,
+} from "../geometry";
 import {
   FULL_BRICK_MODULE_SIZE,
   type BrickId,
   type WallLayout,
-} from "./layout/shared";
-
-export const BUILD_ENVELOPE_WIDTH = 800;
-export const BUILD_ENVELOPE_HEIGHT = 1300;
-
-export interface BrickPlacement {
-  id: number;
-  stride?: number;
-}
-
-export interface Plan {
-  bricks: BrickPlacement[];
-}
-
-export type StrategyFn = (layout: WallLayout) => Plan;
-
-/**
- * Generate a naive plan for a wall layout.
- * Just iterate throught the courses and bricks and add them to the plan.
- */
-export const naivePlanning: StrategyFn = (layout: WallLayout) => {
-  const bricks: BrickPlacement[] = [];
-
-  for (const course of layout.courses) {
-    for (const brick of course.bricks) {
-      bricks.push({ id: brick.id });
-    }
-  }
-
-  return { bricks };
-};
-
-function findBricksInEnvelope(layout: WallLayout, envelope: Bounds) {
-  const bricks: BrickId[] = [];
-  for (const course of layout.courses) {
-    for (const brick of course.bricks) {
-      if (contains(envelope, brick.bounds)) {
-        bricks.push(brick.id);
-      }
-    }
-  }
-  return bricks;
-}
+} from "../layout/shared";
+import {
+  BUILD_ENVELOPE_HEIGHT,
+  BUILD_ENVELOPE_WIDTH,
+  type BrickPlacement,
+  type StrategyFn,
+} from "./shared";
 
 /**
  * Check if a brick is fully supported by the bricks below it.
@@ -73,7 +42,10 @@ function isFullySupported(
   /** Find all bricks that are below the current brick. */
   const courseBelow = layout.courses[brick.courseIndex - 1];
   const bricksBelow = courseBelow.bricks.filter((bottomBrick) =>
-    overlapsHorizontally(brick.bounds, bottomBrick.bounds)
+    overlapsHorizontally(
+      boundsFromBrickLayout(brick),
+      boundsFromBrickLayout(bottomBrick)
+    )
   );
 
   /** If they are all placed, the current brick is fully supported. */
@@ -90,7 +62,7 @@ function findPlaceableBricks(
   bounds: Bounds,
   placedBricks: BrickId[]
 ) {
-  return findBricksInEnvelope(layout, bounds).filter(
+  return findBricksInBounds(layout, bounds).filter(
     (brick) =>
       !placedBricks.includes(brick) &&
       isFullySupported(layout, placedBricks, brick)
@@ -102,11 +74,11 @@ type Direction = 1 | -1;
 function moveEnvelopeHorizontally(
   layout: WallLayout,
   envelope: Bounds,
-  direction: Direction
+  direction: Direction,
+  distance: number
 ): { envelope: Bounds; direction: Direction } {
   let nextDirection = direction;
-  const distance = 2 * FULL_BRICK_MODULE_SIZE;
-  let x = envelope.x + direction * distance;
+  let x = envelope.x + direction * (distance * FULL_BRICK_MODULE_SIZE);
   if (x < 0) {
     x = 0;
     nextDirection = 1;
@@ -135,12 +107,14 @@ export const sweepPlanning: StrategyFn = (layout: WallLayout) => {
   /** The bricks that have been placed. */
   const placedBricks: BrickPlacement[] = [];
 
+  const totalBricks = layout.courses.flatMap((course) => course.bricks).length;
+
   /** The maximum number of iterations to prevent infinite loops.
    *
    * The total number of bricks seems to be a good estimate of the number of iterations to prevent infinite loops.
    * If we have as many strides as bricks, we're doing something really wrong.
    */
-  const maxIterations = layout.totalBricks;
+  const maxIterations = totalBricks;
 
   let iterations = 0;
 
@@ -172,16 +146,12 @@ export const sweepPlanning: StrategyFn = (layout: WallLayout) => {
 
       placedBricks.push({ id: brick, stride });
 
-      console.log(
-        `Placed bricks: ${placedBricks.length} / ${layout.totalBricks}`
-      );
+      console.log(`Placed bricks: ${placedBricks.length} / ${totalBricks}`);
     }
 
-    console.log(
-      `Placed bricks: ${placedBricks.length} / ${layout.totalBricks}`
-    );
+    console.log(`Placed bricks: ${placedBricks.length} / ${totalBricks}`);
 
-    if (placedBricks.length === layout.totalBricks) {
+    if (placedBricks.length === totalBricks) {
       break;
     }
 
@@ -207,7 +177,7 @@ export const sweepPlanning: StrategyFn = (layout: WallLayout) => {
       }
     }
 
-    const moved = moveEnvelopeHorizontally(layout, envelope, direction);
+    const moved = moveEnvelopeHorizontally(layout, envelope, direction, 2);
     envelope = moved.envelope;
     direction = moved.direction;
 

@@ -1,6 +1,4 @@
-import { createBounds } from "../geometry";
 import {
-  BRICK_HEIGHT,
   COURSE_HEIGHT,
   createBrickLayout,
   FULL_BRICK_WIDTH,
@@ -32,13 +30,7 @@ export function generateEnglishCrossBondLayout(
     let x = 0;
 
     function addBrick(width: number) {
-      bricks.push(
-        createBrickLayout(
-          id++,
-          courseIndex,
-          createBounds(x, courseIndex * COURSE_HEIGHT, width, BRICK_HEIGHT)
-        )
-      );
+      bricks.push(createBrickLayout(id++, x, width, courseIndex));
       x += width + HEAD_JOINT_SIZE;
     }
 
@@ -68,6 +60,5 @@ export function generateEnglishCrossBondLayout(
     width,
     height,
     courses,
-    totalBricks: id,
   };
 }

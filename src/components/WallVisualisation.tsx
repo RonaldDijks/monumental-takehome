@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { WallLayout } from "../core/layout/shared";
-import type { BrickPlacement } from "../core/planning";
+import { boundsFromBrickLayout } from "../core/geometry";
+import type { BrickPlacement } from "../core/planning/shared";
 
 export interface WallVisualisationProps {
   layout: WallLayout;
@@ -35,24 +36,15 @@ export const WallVisualisation: React.FC<WallVisualisationProps> = ({
 
       for (const course of courses) {
         for (const brick of course.bricks) {
+          const bounds = boundsFromBrickLayout(brick);
           const placement = bricksLaid.find((b) => b.id === brick.id);
           if (placement) {
             const color = strideToHexColor(placement.stride ?? 0);
             ctx.fillStyle = color;
-            ctx.fillRect(
-              brick.bounds.x,
-              brick.bounds.y,
-              brick.bounds.width,
-              brick.bounds.height
-            );
+            ctx.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
           } else {
             ctx.fillStyle = ghostColor;
-            ctx.fillRect(
-              brick.bounds.x,
-              brick.bounds.y,
-              brick.bounds.width,
-              brick.bounds.height
-            );
+            ctx.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
           }
         }
       }

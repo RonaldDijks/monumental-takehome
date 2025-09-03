@@ -1,7 +1,6 @@
 import "./App.css";
 import { type WallLayout } from "./core/layout/shared";
 import { WallVisualisation } from "./components/WallVisualisation";
-import { naivePlanning, sweepPlanning, type StrategyFn } from "./core/planning";
 import { useMemo, useState } from "react";
 import { ControlDropdown, ControlRow, Controls } from "./components/Controls";
 import { useKeyPress } from "./hooks/useKeyPress";
@@ -9,6 +8,10 @@ import { generateWildBondLayout } from "./core/layout/wildBond";
 import { generateStretcherLayout } from "./core/layout/stretcherBond";
 import { generateEnglishCrossBondLayout } from "./core/layout/englishCrossBond";
 import { generateFlemishBondLayout } from "./core/layout/flemishBond";
+import { naivePlanning } from "./core/planning/naive";
+import { sweepPlanning } from "./core/planning/sweep";
+import type { StrategyFn } from "./core/planning/shared";
+import { greedyLookaheadPlanning } from "./core/planning/greedyLookahead";
 
 export const wallWidth = 2300;
 export const wallHeight = 2000;
@@ -25,13 +28,15 @@ type Layout = keyof typeof layouts;
 const strategies = {
   naive: naivePlanning,
   sweep: sweepPlanning,
+  greedyLookahead: greedyLookaheadPlanning,
 } satisfies Record<string, StrategyFn>;
 
 type Strategy = keyof typeof strategies;
 
 function App() {
   const [currentAction, setCurrentAction] = useState(0);
-  const [selectedStrategy, setSelectedStrategy] = useState<Strategy>("naive");
+  const [selectedStrategy, setSelectedStrategy] =
+    useState<Strategy>("greedyLookahead");
   const [selectedLayout, setSelectedLayout] = useState<Layout>("stretcher");
 
   const layout = useMemo(
@@ -57,6 +62,10 @@ function App() {
     setCurrentAction(Math.min(plan.bricks.length, currentAction + 1));
   };
 
+  const lastAction = () => {
+    setCurrentAction(plan.bricks.length);
+  };
+
   useKeyPress(" ", nextAction);
   useKeyPress("Enter", nextAction);
   useKeyPress("ArrowLeft", previousAction);
@@ -75,6 +84,7 @@ function App() {
           <button onClick={previousAction}>{"<"}</button>
           {currentAction} / {plan.bricks.length}
           <button onClick={nextAction}>{">"}</button>
+          <button onClick={lastAction}>{">>"}</button>
         </ControlRow>
         <ControlRow label="Layout">
           <ControlDropdown
